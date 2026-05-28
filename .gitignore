@@ -1,0 +1,44 @@
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.env.local
+frontend/.env
+frontend/npm-debug.log
+frontend/.qodo/
+
+# Backend
+backend/target/
+backend/.mvn/
+backend/.idea/
+backend/node_modules/
+backend/*.class
+backend/*.jar
+backend/app.log
+backend/app_error.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+.qodo/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# Misc
+.gitattributes
+package-lock.json

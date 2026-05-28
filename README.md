@@ -14,14 +14,41 @@ A comprehensive, production-ready backend system for managing emergency incident
 
 ---
 
+## � Project Structure
+
+```
+sentinelos/
+├── backend/              # Spring Boot Java backend (REST APIs)
+│   ├── src/main/java/com/example/sentinelos/
+│   ├── src/main/resources/
+│   ├── pom.xml
+│   └── mvnw
+│
+├── frontend/            # React TypeScript UI (Vite)
+│   ├── src/
+│   ├── package.json
+│   └── vite.config.ts
+│
+├── docs/                # Complete documentation
+│   ├── QUICK_START.md
+│   ├── COMPLETE_API_DOCUMENTATION.md
+│   ├── TEST_CASES_AND_FLOWS.md
+│   ├── FRONTEND_SETUP_GUIDE.md
+│   └── ... (more detailed docs)
+│
+└── README.md
+```
+
+---
+
 ## 📋 Table of Contents
 
+- [Project Structure](#project-structure)
 - [Overview](#overview)
 - [Key Features](#key-features)
 - [Technology Stack](#technology-stack)
 - [System Architecture](#system-architecture)
-- [API Modules](#api-modules)
-- [Installation & Setup](#installation--setup)
+- [Quick Start](#quick-start)
 - [API Documentation](#api-documentation)
 - [Security Features](#security-features)
 - [Database Schema](#database-schema)
@@ -210,54 +237,130 @@ GET    /api/admin/analytics        - System analytics
 
 ---
 
-## 🚀 Installation & Setup
+## 🚀 Quick Start
 
 ### Prerequisites
 - Java 17+ (JDK)
 - Maven 3.6+
-- MongoDB Account (Atlas or local instance)
+- Node.js 18+ & npm
+- MongoDB Account (Atlas or local)
 - Git
 
-### Step 1: Clone Repository
-```bash
-git clone <repository-url>
-cd sentinelos
-```
+### Option 1: Run Locally (Both Backend & Frontend)
 
-### Step 2: Configure Database
-Edit `src/main/resources/application.properties`:
-```properties
-spring.data.mongodb.uri=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>
-jwt.secret=your-secret-key-here
-jwt.expiration=86400000
-```
-
-### Step 3: Build Project
+#### Terminal 1 - Start Backend:
 ```bash
+cd backend
+mvn spring-boot:run
+```
+Backend runs at: `http://localhost:8080`
+
+#### Terminal 2 - Start Frontend:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Frontend runs at: `http://localhost:5173`
+
+### Option 2: Backend Only
+```bash
+cd backend
+
+# Configure Database
+# Edit: backend/src/main/resources/application.properties
+# Set MongoDB URI and JWT secret
+
+# Build & Run
 mvn clean install
-```
-
-### Step 4: Run Application
-```bash
 mvn spring-boot:run
 ```
 
-Application starts on `http://localhost:8080`
-
-### Step 5: Verify Installation
+Test API:
 ```bash
-curl http://localhost:8080/api/hospital/all
+curl http://localhost:8080/api/admin/stats
+```
+
+### Option 3: Frontend Only
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
+## 🚀 Installation & Setup (Detailed)
+
+### Step 1: Clone Repository
+```bash
+git clone https://github.com/DevireddyHepsiba/Emergency-Management-System.git
+cd sentinelos
+```
+
+### Step 2: Backend Configuration
+```bash
+cd backend
+
+# Edit configuration file
+# File: src/main/resources/application.properties
+
+# Add MongoDB credentials:
+spring.data.mongodb.uri=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>
+
+# Add JWT configuration:
+jwt.secret=your-secret-key-here
+jwt.expiration=86400000
+
+# Add OpenAI API key (for Spring AI):
+spring.ai.openai.api-key=your-openai-api-key
+```
+
+### Step 3: Build Backend
+```bash
+cd backend
+mvn clean install
+```
+
+### Step 4: Run Backend
+```bash
+mvn spring-boot:run
+```
+✅ Backend starts on: `http://localhost:8080`
+
+### Step 5: Setup Frontend
+```bash
+cd frontend
+npm install
+```
+
+### Step 6: Run Frontend
+```bash
+npm run dev
+```
+✅ Frontend opens at: `http://localhost:5173`
+
+### Step 7: Verify Installation
+```bash
+# Backend health check
+curl http://localhost:8080/api/admin/health
+
+# Frontend accessible
+# Open browser: http://localhost:5173
+# Login with test credentials created during registration
 ```
 
 ---
 
 ## 📚 API Documentation
 
-**Full API Documentation**: See [COMPLETE_API_DOCUMENTATION.md](./COMPLETE_API_DOCUMENTATION.md)
+**Full Documentation**: See [docs/COMPLETE_API_DOCUMENTATION.md](./docs/COMPLETE_API_DOCUMENTATION.md)
 
-**Postman Collections Available**:
-- `POSTMAN_HOSPITAL_VOLUNTEER_API.md` - Hospital & Volunteer endpoints
-- `RESCUE_HOSPITAL_DASHBOARD_API.md` - Rescue & Dashboard endpoints
+**Quick References**:
+- [QUICK_START.md](./docs/QUICK_START.md) - 5-minute setup guide
+- [TEST_CASES_AND_FLOWS.md](./docs/TEST_CASES_AND_FLOWS.md) - Complete test scenarios
+- [FRONTEND_SETUP_GUIDE.md](./docs/FRONTEND_SETUP_GUIDE.md) - React component guide
+- [POSTMAN_HOSPITAL_VOLUNTEER_API.md](./docs/POSTMAN_HOSPITAL_VOLUNTEER_API.md) - API endpoints
 
 ### Sample Request
 ```bash
