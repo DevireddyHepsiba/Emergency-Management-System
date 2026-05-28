@@ -1,0 +1,27 @@
+package com.example.sentinelos.repository;
+
+import com.example.sentinelos.entity.Emergency;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface EmergencyRepository extends MongoRepository<Emergency, String> {
+    List<Emergency> findByUserId(String userId);
+    
+    List<Emergency> findByStatus(String status);
+    
+    List<Emergency> findByEmergencyType(String emergencyType);
+    
+    List<Emergency> findByPriority(String priority);
+    
+    List<Emergency> findByCreatedAtAfter(LocalDateTime dateTime);
+    
+    List<Emergency> findByStatusOrderByCreatedAtDesc(String status);
+    
+    Optional<Emergency> findById(String id);
+}
+
