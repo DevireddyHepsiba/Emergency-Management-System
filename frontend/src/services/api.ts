@@ -4,29 +4,39 @@
  * Complete type safety with TypeScript
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8081/api";
 
 // ============ TYPES & INTERFACES ============
 
 export interface LoginRequest {
-  username: string;
+  email: string;
   password: string;
 }
 
 export interface LoginResponse {
   token: string;
   userId: string;
-  username: string;
   email: string;
+  name: string;
   role: string;
+  hospitalId?: string;
+  message: string;
+}
+
+export interface RegisterResponse {
+  email: string;
+  name: string;
+  role: string;
+  message: string;
 }
 
 export interface RegisterRequest {
-  username: string;
+  name: string;
   email: string;
   password: string;
-  phoneNumber: string;
-  role: "ADMIN" | "USER" | "VOLUNTEER" | "HOSPITAL_STAFF" | "RESCUE_TEAM";
+  role: "VOLUNTEER" | "CITIZEN";
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface EmergencyReport {
@@ -41,16 +51,26 @@ export interface EmergencyReport {
   victims?: number;
   hasMedicalEmergency?: boolean;
   mediaUrls?: string[];
-  status?: "REPORTED" | "ACKNOWLEDGED" | "IN_PROGRESS" | "RESOLVED";
+  status?: "REPORTED" | "TRIAGED" | "DISPATCHED" | "ON_SCENE" | "TRANSPORTING" | "ARRIVED" | "RESOLVED" | "CANCELLED";
   priority?: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
   createdAt?: string;
   updatedAt?: string;
+  requiredServices?: string[];
+  requiredBedType?: string;
+  ambulanceCapability?: string;
+  needsAmbulance?: boolean;
+  triageNotes?: string;
+  statusHistory?: { status: string; changedBy: string; note: string; changedAt: string }[];
 }
 
 export interface Hospital {
   id?: string;
   name: string;
   address?: string;
+  phone?: string;
+  services?: string[];
+  cardiacBedsAvailable?: number;
+  capacityUpdatedAt?: string;
   latitude: number;
   longitude: number;
   bedsAvailable?: number;
@@ -75,24 +95,100 @@ export interface VolunteerTask {
   createdAt?: string;
 }
 
+export interface VolunteerAccount {
+  id: string;
+  name: string;
+  email: string;
+}
+
 export interface RescueMission {
   id?: string;
+  missionCode?: string;
   emergencyId: string;
-  rescueTeamId?: string;
-  status?: "ASSIGNED" | "EN_ROUTE" | "REACHED" | "IN_PROGRESS" | "COMPLETED";
+  ambulanceId?: string;
+  assignedVehicle?: string;
+  teamAccepted?: boolean;
+  hospitalAccepted?: boolean;
+  teamAcceptedBy?: string;
+  hospitalAcceptedBy?: string;
+  requiredBedType?: string;
+  title: string;
+  description?: string;
+  location?: string;
+  latitude?: number;
+  longitude?: number;
+  victims?: number;
+  missionType?: string;
+  assignedTeam?: string;
+  hospitalId?: string;
+  responders?: string[];
+  distance?: number;
+  eta?: number;
+  status?: "OFFERED" | "DECLINED" | "ACCEPTED" | "EN_ROUTE" | "REACHED" | "TRANSPORTING" | "ARRIVED" | "COMPLETED";
   priority?: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
-  estimatedTimeOfArrival?: number;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 export interface AdminStats {
   activeEmergencies: number;
   totalVolunteers: number;
   activeRescueMissions: number;
-  hospitalCapacity: number;
-  avgResponseTime: number;
+  totalHospitals: number;
+  availableBeds: number;
+  activeVolunteers: number;
+  volunteersOnMission: number;
+  suppliesInStock: number;
+  servicesUp: number;
+  servicesDown: number;
+  triageAccuracy?: number;
+  sosProcessed?: number;
+  duplicatesKilled?: number;
 }
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  hospitalId?: string;
+}
+
+export interface TriageRequest {
+  priority: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  requiredServices: string[];
+  requiredBedType: "GENERAL" | "ICU" | "CARDIAC" | "NONE";
+  needsAmbulance: boolean;
+  ambulanceCapability?: string;
+  notes?: string;
+}
+
+export interface AmbulanceRecommendation {
+  id: string;
+  callSign: string;
+  type: string;
+  capabilities: string[];
+  status: string;
+  hospitalId?: string;
+  latitude: number;
+  longitude: number;
+  distanceKm: number;
+  locationUpdatedAt?: string;
+  updatedAt?: string;
+}
+
+export interface DispatchRecommendations {
+  emergencyId: string;
+  hospitals: Hospital[];
+  ambulances: AmbulanceRecommendation[];
+  notice: string;
+}
+
+export interface CreateDispatchRequest {
+  emergencyId: string;
+  hospitalId?: string;
+  ambulanceId?: string;
+}
+
+export interface AmbulanceUnit extends AmbulanceRecommendation {}
 
 // ============ AUTHENTICATION APIs ============
 
@@ -107,10 +203,14 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
   }
   const data = await response.json();
   localStorage.setItem("token", data.token);
+  localStorage.setItem("userId", data.userId);
+  localStorage.setItem("userRole", data.role);
+  if (data.hospitalId) localStorage.setItem("hospitalId", data.hospitalId); else localStorage.removeItem("hospitalId");
+  localStorage.setItem("userEmail", data.email);
   return data;
 }
 
-export async function register(userData: RegisterRequest): Promise<LoginResponse> {
+export async function register(userData: RegisterRequest): Promise<RegisterResponse> {
   const response = await fetch(`${API_BASE_URL}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -154,7 +254,7 @@ export async function reportEmergency(emergency: EmergencyReport): Promise<Emerg
 }
 
 export async function getAllEmergencies(): Promise<EmergencyReport[]> {
-  const response = await fetch(`${API_BASE_URL}/emergency/all/reported`, {
+  const response = await fetch(`${API_BASE_URL}/emergency/all`, {
     headers: getHeaders(),
   });
   if (!response.ok) {
@@ -170,6 +270,18 @@ export async function getEmergency(emergencyId: string): Promise<EmergencyReport
   if (!response.ok) {
     throw new Error(`Failed to fetch emergency: ${response.statusText}`);
   }
+  return response.json();
+}
+
+export async function triageEmergency(emergencyId: string, triage: TriageRequest): Promise<EmergencyReport> {
+  const response = await fetch(`${API_BASE_URL}/emergency/${emergencyId}/triage`, { method: "PUT", headers: getHeaders(), body: JSON.stringify(triage) });
+  if (!response.ok) throw new Error(`Triage could not be saved: ${response.statusText}`);
+  return response.json();
+}
+
+export async function getDispatchRecommendations(emergencyId: string): Promise<DispatchRecommendations> {
+  const response = await fetch(`${API_BASE_URL}/emergency/${emergencyId}/recommendations`, { headers: getHeaders() });
+  if (!response.ok) throw new Error(`Could not match response resources: ${response.statusText}`);
   return response.json();
 }
 
@@ -219,6 +331,41 @@ export async function addHospital(hospital: Hospital): Promise<Hospital> {
   if (!response.ok) {
     throw new Error(`Failed to add hospital: ${response.statusText}`);
   }
+  return response.json();
+}
+
+export async function updateHospitalLocation(hospitalId: string, latitude: number, longitude: number): Promise<Hospital> {
+  const response = await fetch(`${API_BASE_URL}/hospital/${hospitalId}/location?latitude=${latitude}&longitude=${longitude}`, { method: "PUT", headers: getHeaders() });
+  if (!response.ok) throw new Error(`Could not update hospital location: ${response.statusText}`);
+  return response.json();
+}
+export async function updateHospitalServices(hospitalId: string, services: string[]): Promise<Hospital> {
+  const response = await fetch(`${API_BASE_URL}/hospital/${hospitalId}/services`, { method: "PUT", headers: getHeaders(), body: JSON.stringify(services) });
+  if (!response.ok) throw new Error(`Could not update hospital services: ${response.statusText}`);
+  return response.json();
+}
+
+export async function getAmbulances(): Promise<AmbulanceUnit[]> {
+  const response = await fetch(`${API_BASE_URL}/hospital/ambulances`, { headers: getHeaders() });
+  if (!response.ok) throw new Error(`Could not load ambulance units: ${response.statusText}`);
+  return response.json();
+}
+
+export async function addAmbulance(ambulance: Omit<AmbulanceUnit, "id" | "status" | "distanceKm" | "updatedAt" | "locationUpdatedAt">): Promise<AmbulanceUnit> {
+  const response = await fetch(`${API_BASE_URL}/hospital/ambulances`, { method: "POST", headers: getHeaders(), body: JSON.stringify(ambulance) });
+  if (!response.ok) throw new Error(`Could not add ambulance unit: ${response.statusText}`);
+  return response.json();
+}
+
+export async function updateAmbulanceStatus(ambulanceId: string, status: string): Promise<AmbulanceUnit> {
+  const response = await fetch(`${API_BASE_URL}/hospital/ambulances/${ambulanceId}/status?status=${encodeURIComponent(status)}`, { method: "PUT", headers: getHeaders() });
+  if (!response.ok) throw new Error(`Could not update ambulance status: ${response.statusText}`);
+  return response.json();
+}
+
+export async function updateAmbulanceLocation(ambulanceId: string, latitude: number, longitude: number): Promise<AmbulanceUnit> {
+  const response = await fetch(`${API_BASE_URL}/hospital/ambulances/${ambulanceId}/location?latitude=${latitude}&longitude=${longitude}`, { method: "PUT", headers: getHeaders() });
+  if (!response.ok) throw new Error(`Could not update ambulance location: ${response.statusText}`);
   return response.json();
 }
 
@@ -274,10 +421,11 @@ export async function updateHospitalResources(
   hospitalId: string,
   beds: number,
   icu: number,
+  cardiac: number,
   ambulances: number
 ): Promise<Hospital> {
   const response = await fetch(
-    `${API_BASE_URL}/hospital/${hospitalId}/resources?beds=${beds}&icu=${icu}&ambulances=${ambulances}`,
+    `${API_BASE_URL}/hospital/${hospitalId}/resources?beds=${beds}&icu=${icu}&cardiac=${cardiac}&ambulances=${ambulances}`,
     {
       method: "PUT",
       headers: getHeaders(),
@@ -320,6 +468,12 @@ export async function getAllVolunteerTasks(): Promise<VolunteerTask[]> {
   if (!response.ok) {
     throw new Error(`Failed to fetch volunteer tasks: ${response.statusText}`);
   }
+  return response.json();
+}
+
+export async function getVolunteerAccounts(): Promise<VolunteerAccount[]> {
+  const response = await fetch(`${API_BASE_URL}/volunteer/task/volunteers`, { headers: getHeaders() });
+  if (!response.ok) throw new Error(`Failed to fetch volunteer accounts: ${response.statusText}`);
   return response.json();
 }
 
@@ -394,15 +548,28 @@ export async function completeVolunteerTask(taskId: string): Promise<VolunteerTa
 
 // ============ RESCUE MISSION APIs ============
 
-export async function createRescueMission(mission: RescueMission): Promise<RescueMission> {
+export async function createRescueMission(mission: CreateDispatchRequest): Promise<RescueMission> {
   const response = await fetch(`${API_BASE_URL}/rescue/mission/create`, {
     method: "POST",
     headers: getHeaders(),
     body: JSON.stringify(mission),
   });
   if (!response.ok) {
-    throw new Error(`Failed to create rescue mission: ${response.statusText}`);
+    let detail = "";
+    try {
+      const body = await response.json() as { error?: string; message?: string };
+      detail = body.error || body.message || "";
+    } catch {
+      detail = await response.text().catch(() => "");
+    }
+    throw new Error(`Failed to create response offer (${response.status})${detail ? `: ${detail}` : `: ${response.statusText || "check backend logs"}`}`);
   }
+  return response.json();
+}
+
+export async function recordMissionResponse(missionId: string, side: "team" | "hospital", accepted: boolean): Promise<RescueMission> {
+  const response = await fetch(`${API_BASE_URL}/rescue/mission/${missionId}/${side}-response?accepted=${accepted}`, { method: "POST", headers: getHeaders() });
+  if (!response.ok) throw new Error(`Could not record ${side} decision: ${response.statusText}`);
   return response.json();
 }
 
@@ -473,6 +640,23 @@ export async function getAdminStats(): Promise<AdminStats> {
   if (!response.ok) {
     throw new Error(`Failed to fetch admin stats: ${response.statusText}`);
   }
+  return response.json();
+}
+
+export async function getAdminUsers(): Promise<AdminUser[]> {
+  const response = await fetch(`${API_BASE_URL}/admin/dashboard/users`, { headers: getHeaders() });
+  if (!response.ok) throw new Error(`Failed to fetch users: ${response.statusText}`);
+  return response.json();
+}
+
+export async function assignHospitalToUser(userId: string, hospitalId: string): Promise<AdminUser> {
+  const response = await fetch(`${API_BASE_URL}/admin/dashboard/users/${userId}/hospital?hospitalId=${encodeURIComponent(hospitalId)}`, { method: "PUT", headers: getHeaders() });
+  if (!response.ok) throw new Error(`Failed to assign hospital: ${response.statusText}`);
+  return response.json();
+}
+export async function updateUserRole(userId: string, role: string): Promise<AdminUser> {
+  const response = await fetch(`${API_BASE_URL}/admin/dashboard/users/${userId}/role?role=${encodeURIComponent(role)}`, { method: "PUT", headers: getHeaders() });
+  if (!response.ok) throw new Error(`Failed to update user role: ${response.statusText}`);
   return response.json();
 }
 

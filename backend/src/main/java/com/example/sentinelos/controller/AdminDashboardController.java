@@ -4,11 +4,21 @@ import com.example.sentinelos.repository.VolunteerRepository;
 import com.example.sentinelos.repository.SupplyInventoryRepository;
 import com.example.sentinelos.repository.AIMetricsRepository;
 import com.example.sentinelos.repository.SystemHealthRepository;
+import com.example.sentinelos.repository.EmergencyRepository;
+import com.example.sentinelos.repository.RescueMissionRepository;
+import com.example.sentinelos.repository.HospitalRepository;
+import com.example.sentinelos.repository.UserRepository;
+import com.example.sentinelos.entity.Role;
+import com.example.sentinelos.entity.User;
+import com.example.sentinelos.exception.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -21,10 +31,24 @@ public class AdminDashboardController {
     private final SupplyInventoryRepository supplyInventoryRepository;
     private final AIMetricsRepository aiMetricsRepository;
     private final SystemHealthRepository systemHealthRepository;
+    private final EmergencyRepository emergencyRepository;
+    private final RescueMissionRepository rescueMissionRepository;
+    private final HospitalRepository hospitalRepository;
+    private final UserRepository userRepository;
 
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getDashboardStats() {
         Map<String, Object> stats = new HashMap<>();
+
+        stats.put("activeEmergencies", emergencyRepository.countByStatus("REPORTED")
+                + emergencyRepository.countByStatus("ACKNOWLEDGED")
+                + emergencyRepository.countByStatus("IN_PROGRESS"));
+        stats.put("activeRescueMissions", rescueMissionRepository.findActiveMissions().size());
+        stats.put("totalVolunteers", userRepository.countByRole(Role.VOLUNTEER));
+        stats.put("totalHospitals", hospitalRepository.count());
+        stats.put("availableBeds", hospitalRepository.findAll().stream()
+                .mapToInt(hospital -> hospital.getBedsAvailable() == null ? 0 : hospital.getBedsAvailable())
+                .sum());
         
         // Volunteer stats
         stats.put("activeVolunteers", volunteerRepository.countByStatus("ACTIVE"));
@@ -77,6 +101,63 @@ public class AdminDashboardController {
     @GetMapping("/health")
     public ResponseEntity<?> getSystemHealth() {
         return ResponseEntity.ok(systemHealthRepository.findAll());
+    }
+
+    @GetMapping("/users")
+    public ResponseEntity<List<Map<String, String>>> getUsers() {
+        return ResponseEntity.ok(userRepository.findAll().stream().map(this::toPublicUser).toList());
+    }
+
+    @PutMapping("/users/{userId}/role")
+    public ResponseEntity<Map<String, String>> updateUserRole(
+            @PathVariable String userId,
+            @RequestParam String role,
+            Authentication authentication) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UnauthorizedException("User not found"));
+        Role newRole;
+        try {
+            newRole = Role.valueOf(role.toUpperCase());
+        } catch (IllegalArgumentException exception) {
+            throw new UnauthorizedException("Invalid role");
+        }
+        if (user.getEmail().equals(authentication.getName()) && newRole != Role.ADMIN) {
+            throw new UnauthorizedException("You cannot remove your own administrator role");
+        }
+        user.setRole(newRole);
+        if (newRole != Role.HOSPITAL) user.setHospitalId(null);
+        userRepository.save(user);
+        return ResponseEntity.ok(toPublicUser(user));
+    }
+
+    @PutMapping("/users/{userId}/hospital")
+    public ResponseEntity<Map<String, String>> assignHospital(
+            @PathVariable String userId,
+            @RequestParam String hospitalId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UnauthorizedException("User not found"));
+        if (user.getRole() != Role.HOSPITAL) {
+            throw new UnauthorizedException("Assign a hospital only to an account with the HOSPITAL role");
+        }
+        if ("UNASSIGNED".equalsIgnoreCase(hospitalId)) {
+            user.setHospitalId(null);
+        } else {
+            if (!hospitalRepository.existsById(hospitalId)) {
+                throw new UnauthorizedException("Hospital record not found");
+            }
+            user.setHospitalId(hospitalId);
+        }
+        userRepository.save(user);
+        return ResponseEntity.ok(toPublicUser(user));
+    }
+    private Map<String, String> toPublicUser(User user) {
+        Map<String, String> result = new LinkedHashMap<>();
+        result.put("id", user.getId());
+        result.put("name", user.getName());
+        result.put("email", user.getEmail());
+        result.put("role", user.getRole().name());
+        if (user.getHospitalId() != null) result.put("hospitalId", user.getHospitalId());
+        return result;
     }
 }
 

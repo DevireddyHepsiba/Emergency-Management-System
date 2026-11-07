@@ -154,7 +154,7 @@ sentinelos/
 cd c:\Users\hepsi\OneDrive\Desktop\sentinelos
 mvn spring-boot:run
 ```
-Backend runs at: `http://localhost:8080`
+Backend runs at: `http://localhost:8081`
 
 #### **Start Frontend:**
 ```bash
@@ -376,7 +376,7 @@ npm run test
 
 ## 🎉 Deployment Checklist
 
-- [ ] Backend running locally (http://localhost:8080)
+- [ ] Backend running locally (http://localhost:8081)
 - [ ] Frontend running locally (http://localhost:5173)
 - [ ] Login/Register working
 - [ ] All components accessible

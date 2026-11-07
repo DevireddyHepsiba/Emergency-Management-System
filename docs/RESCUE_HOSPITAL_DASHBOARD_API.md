@@ -4,7 +4,7 @@
 
 ### 1. Get Rescue Team Metrics (Overview)
 ```
-GET http://localhost:8080/api/dashboard/rescue/metrics
+GET http://localhost:8081/api/dashboard/rescue/metrics
 ```
 
 **Response (200 OK):**
@@ -56,7 +56,7 @@ GET http://localhost:8080/api/dashboard/rescue/metrics
 
 ### 2. Get Missions by Status
 ```
-GET http://localhost:8080/api/dashboard/rescue/missions/status/EN_ROUTE
+GET http://localhost:8081/api/dashboard/rescue/missions/status/EN_ROUTE
 ```
 
 **Possible Statuses:**
@@ -87,7 +87,7 @@ GET http://localhost:8080/api/dashboard/rescue/missions/status/EN_ROUTE
 
 ### 3. Get Missions by Priority
 ```
-GET http://localhost:8080/api/dashboard/rescue/missions/priority/CRITICAL
+GET http://localhost:8081/api/dashboard/rescue/missions/priority/CRITICAL
 ```
 
 **Priorities:** `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`
@@ -105,7 +105,7 @@ GET http://localhost:8080/api/dashboard/rescue/missions/priority/CRITICAL
 
 ### 4. Get All Active Missions
 ```
-GET http://localhost:8080/api/dashboard/rescue/missions/active
+GET http://localhost:8081/api/dashboard/rescue/missions/active
 ```
 
 **Response (200 OK):**
@@ -120,7 +120,7 @@ GET http://localhost:8080/api/dashboard/rescue/missions/active
 
 ### 5. Get Rescue Analytics
 ```
-GET http://localhost:8080/api/dashboard/rescue/analytics
+GET http://localhost:8081/api/dashboard/rescue/analytics
 ```
 
 **Response (200 OK):**
@@ -148,7 +148,7 @@ GET http://localhost:8080/api/dashboard/rescue/analytics
 
 ### 1. Get Hospital Metrics (Overview)
 ```
-GET http://localhost:8080/api/dashboard/hospital/metrics/{hospitalId}
+GET http://localhost:8081/api/dashboard/hospital/metrics/{hospitalId}
 ```
 
 **Response (200 OK):**
@@ -188,7 +188,7 @@ GET http://localhost:8080/api/dashboard/hospital/metrics/{hospitalId}
 
 ### 2. Get Department Details
 ```
-GET http://localhost:8080/api/dashboard/hospital/departments/{hospitalId}
+GET http://localhost:8081/api/dashboard/hospital/departments/{hospitalId}
 ```
 
 **Response (200 OK):**
@@ -235,7 +235,7 @@ GET http://localhost:8080/api/dashboard/hospital/departments/{hospitalId}
 
 ### 3. Get Incoming Patients
 ```
-GET http://localhost:8080/api/dashboard/hospital/incoming-patients/{hospitalId}
+GET http://localhost:8081/api/dashboard/hospital/incoming-patients/{hospitalId}
 ```
 
 **Response (200 OK):**
@@ -275,7 +275,7 @@ GET http://localhost:8080/api/dashboard/hospital/incoming-patients/{hospitalId}
 
 ### 4. Get Patient Queue (Last 24h)
 ```
-GET http://localhost:8080/api/dashboard/hospital/patient-queue/{hospitalId}
+GET http://localhost:8081/api/dashboard/hospital/patient-queue/{hospitalId}
 ```
 
 **Response (200 OK):**
@@ -297,7 +297,7 @@ GET http://localhost:8080/api/dashboard/hospital/patient-queue/{hospitalId}
 
 ### 5. Get Occupancy Alerts
 ```
-GET http://localhost:8080/api/dashboard/hospital/occupancy-alert/{hospitalId}
+GET http://localhost:8081/api/dashboard/hospital/occupancy-alert/{hospitalId}
 ```
 
 **Response (200 OK):**
@@ -327,7 +327,7 @@ GET http://localhost:8080/api/dashboard/hospital/occupancy-alert/{hospitalId}
 
 ### 6. Get Hospital Analytics
 ```
-GET http://localhost:8080/api/dashboard/hospital/analytics/{hospitalId}
+GET http://localhost:8081/api/dashboard/hospital/analytics/{hospitalId}
 ```
 
 **Response (200 OK):**
@@ -430,25 +430,25 @@ Response with occupancy & patient data
 
 ### Test 1: Get Rescue Metrics
 ```bash
-curl -X GET http://localhost:8080/api/dashboard/rescue/metrics \
+curl -X GET http://localhost:8081/api/dashboard/rescue/metrics \
   -H "Content-Type: application/json"
 ```
 
 ### Test 2: Get Hospital Metrics
 ```bash
-curl -X GET http://localhost:8080/api/dashboard/hospital/metrics/hospital_001 \
+curl -X GET http://localhost:8081/api/dashboard/hospital/metrics/hospital_001 \
   -H "Content-Type: application/json"
 ```
 
 ### Test 3: Get Critical Occupancy Alerts
 ```bash
-curl -X GET http://localhost:8080/api/dashboard/hospital/occupancy-alert/hospital_001 \
+curl -X GET http://localhost:8081/api/dashboard/hospital/occupancy-alert/hospital_001 \
   -H "Content-Type: application/json"
 ```
 
 ### Test 4: Get Active Rescue Missions
 ```bash
-curl -X GET http://localhost:8080/api/dashboard/rescue/missions/active \
+curl -X GET http://localhost:8081/api/dashboard/rescue/missions/active \
   -H "Content-Type: application/json"
 ```
 

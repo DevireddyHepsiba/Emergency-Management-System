@@ -91,26 +91,6 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Spring AI for Advanced ML Features -->
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
-            <version>1.0.0-M2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-core</artifactId>
-            <version>1.0.0-M2</version>
-        </dependency>
-
-        <!-- For vector operations and embeddings -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-math3</artifactId>
-            <version>3.6.1</version>
-        </dependency>
-
 	</dependencies>
 
 	<build>

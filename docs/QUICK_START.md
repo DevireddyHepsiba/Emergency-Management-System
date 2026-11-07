@@ -87,8 +87,8 @@ git push -u origin main
 
 ### **Backend won't start:**
 ```bash
-# Check if port 8080 is in use
-netstat -ano | findstr :8080
+# Check if port 8081 is in use
+netstat -ano | findstr :8081
 # If in use, kill the process
 taskkill /PID <PID> /F
 ```
@@ -109,9 +109,9 @@ git remote add origin https://github.com/YOUR-USERNAME/sentinelos.git
 ```
 
 ### **API not connecting:**
-1. Verify backend is running: `http://localhost:8080/api/status`
+1. Verify backend is running: `http://localhost:8081/api/status`
 2. Check CORS headers in browser DevTools (F12 → Network)
-3. Ensure port 8080 is accessible
+3. Ensure port 8081 is accessible
 
 ---
 

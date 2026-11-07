@@ -14,7 +14,7 @@ const sosTrend = [120, 135, 128, 142, 150, 148, 162, 175, 168, 180, 195, 210];
 
 export function DashboardPage() {
   return (
-    <DashboardLayout>
+    <div className="min-h-screen">
       <div className="p-6 space-y-6">
         <div className="flex flex-wrap justify-between items-end gap-4">
           <div>
@@ -29,34 +29,34 @@ export function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-12 justify-start gap-3">
-              <SirenIcon className="size-5" />
-              <div className="text-left">
-                <p className="font-semibold">New Alert</p>
-                <p className="text-xs text-muted-foreground">Broadcast a new incident</p>
-              </div>
-            </Button>
-            <Button variant="outline" className="h-12 justify-start gap-3">
-              <PlusIcon className="size-5" />
-              <div className="text-left">
-                <p className="font-semibold">Dispatch Unit</p>
-                <p className="text-xs text-muted-foreground">Send team to location</p>
-              </div>
-            </Button>
-            <Button variant="outline" className="h-12 justify-start gap-3">
-              <ShieldCheckIcon className="size-5" />
-              <div className="text-left">
-                <p className="font-semibold">Register Evacuee</p>
-                <p className="text-xs text-muted-foreground">Add person to shelter</p>
-              </div>
-            </Button>
-            <Button variant="outline" className="h-12 justify-start gap-3">
-              <PackageIcon className="size-5" />
-              <div className="text-left">
-                <p className="font-semibold">Supply Request</p>
-                <p className="text-xs text-muted-foreground">Request new resources</p>
-              </div>
-            </Button>
+          <Button variant="outline" className="h-12 justify-start gap-3">
+            <SirenIcon className="size-5" />
+            <div className="text-left">
+              <p className="font-semibold">New Alert</p>
+              <p className="text-xs text-muted-foreground">Broadcast a new incident</p>
+            </div>
+          </Button>
+          <Button variant="outline" className="h-12 justify-start gap-3">
+            <PlusIcon className="size-5" />
+            <div className="text-left">
+              <p className="font-semibold">Dispatch Unit</p>
+              <p className="text-xs text-muted-foreground">Send team to location</p>
+            </div>
+          </Button>
+          <Button variant="outline" className="h-12 justify-start gap-3">
+            <ShieldCheckIcon className="size-5" />
+            <div className="text-left">
+              <p className="font-semibold">Register Evacuee</p>
+              <p className="text-xs text-muted-foreground">Add person to shelter</p>
+            </div>
+          </Button>
+          <Button variant="outline" className="h-12 justify-start gap-3">
+            <PackageIcon className="size-5" />
+            <div className="text-left">
+              <p className="font-semibold">Supply Request</p>
+              <p className="text-xs text-muted-foreground">Request new resources</p>
+            </div>
+          </Button>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -208,7 +208,7 @@ export function DashboardPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   );
 }
 

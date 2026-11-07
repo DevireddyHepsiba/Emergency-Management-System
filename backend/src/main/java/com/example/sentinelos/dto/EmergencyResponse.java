@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.List;
+import com.example.sentinelos.entity.EmergencyStatusEvent;
 
 @Data
 @Builder
@@ -27,5 +28,12 @@ public class EmergencyResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String message;
+    private List<String> requiredServices;
+    private String requiredBedType;
+    private String ambulanceCapability;
+    private Boolean needsAmbulance;
+    private String triageNotes;
+    private String dispatcherId;
+    private List<EmergencyStatusEvent> statusHistory;
 }
 

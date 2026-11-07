@@ -13,17 +13,18 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret:mysecretkeymysecretkeymysecretkeymysecretkey}")
+    @Value("${jwt.secret}")
     private String SECRET;
 
     @Value("${jwt.expiration:86400000}")
     private long expiration;
 
     private Key getKey() {
-        byte[] keyBytes = new byte[32];
         byte[] secretBytes = SECRET.getBytes();
-        System.arraycopy(secretBytes, 0, keyBytes, 0, Math.min(secretBytes.length, keyBytes.length));
-        return Keys.hmacShaKeyFor(keyBytes);
+        if (secretBytes.length < 32) {
+            throw new IllegalStateException("JWT_SECRET must contain at least 32 bytes");
+        }
+        return Keys.hmacShaKeyFor(secretBytes);
     }
 
     public String generateToken(String email) {

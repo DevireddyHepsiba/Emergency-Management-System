@@ -17,9 +17,9 @@ import java.time.LocalDateTime;
 public class AIMetrics {
     @Id
     private String id;
-    private Double triageAccuracy; // 99.1%
-    private Long sosProcessed; // 48,210
-    private Long duplicatesKilled; // 9,820
+    private Double triageAccuracy;
+    private Long sosProcessed;
+    private Long duplicatesKilled;
     private Integer translationLanguages; // 32 languages
     private Double severityPredictionAccuracy;
     private Long sosProcessedToday;

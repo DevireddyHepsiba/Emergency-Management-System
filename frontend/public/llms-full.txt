@@ -1,0 +1,39 @@
+# SentinelOS — full project description
+
+SentinelOS is an emergency response coordination web application. Its purpose is to help a community report an incident and help authorized people coordinate follow-up actions through one shared record.
+
+## End-to-end incident flow
+
+1. A citizen or volunteer signs in and reports an emergency, including a description, victim count, incident type, and map location.
+2. The report is saved with a tracking identifier. A saved report does not mean an ambulance has been dispatched.
+3. A dispatcher reviews the report and records priority, required services, bed type, ambulance need, capability, and triage notes.
+4. The dispatcher requests resource recommendations. Hospitals are screened by active status, services, bed type, available capacity, and recent capacity updates. Ambulances are screened by availability, capability, and recent location.
+5. The dispatcher selects suitable resources and creates a response offer. An offer is a request for acceptance, not proof of dispatch.
+6. The response team and hospital each record acceptance or decline. The response team then updates the mission through its operational statuses and ETA.
+7. The reporter can follow report status and mission updates in My Reports.
+
+## Roles
+
+- Citizen: create emergency reports, review own reports, and view public hospital information.
+- Volunteer: create reports, see assigned volunteer tasks, and update task progress.
+- Dispatcher: triage reports, request matching recommendations, and create response offers.
+- Rescue team: review offers, accept or decline, update mission progress, and report ETA.
+- Hospital: review referrals for its linked facility and update acceptance or facility resources.
+- Admin: manage accounts, assign operational roles, and oversee system records.
+- NGO: coordinate volunteer tasks and assignments.
+
+## Location and map behavior
+
+Incident, hospital, and ambulance map coordinates are used for display and straight-line distance estimates. Ambulance pins represent the last saved location and are not continuous GPS tracking. The application may use OpenStreetMap map tiles and an on-demand place search; map search is only performed after the user submits a query. Map provider availability and coverage may vary.
+
+## Safety and operational limits
+
+SentinelOS is a software project and coordination aid. It does not replace local emergency services, emergency phone numbers, professional medical judgment, or dispatcher review. It does not automatically send an ambulance. Hospitals and response teams must confirm offers, capacity, and availability. Distances are estimates and are not road travel times. Information shown in the system is only as current as the latest user or administrator update.
+
+## Public and private routes
+
+- Public overview: `/`
+- Citizen and volunteer sign-up: `/register`
+- Sign-in: `/login`
+- Authenticated operational pages include `/dashboard`, `/report-emergency`, `/my-reports`, `/hospitals`, `/rescue-missions`, `/volunteer-tasks`, and `/ai-metrics`.
+- Authenticated operational pages contain user or incident data and should not be indexed or summarized as public data.

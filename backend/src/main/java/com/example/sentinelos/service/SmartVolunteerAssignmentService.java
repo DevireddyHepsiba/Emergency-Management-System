@@ -36,7 +36,7 @@ public class SmartVolunteerAssignmentService {
                 calculateVolunteerScore(v, emergency),
                 v
             ))
-            .sorted(Comparator.comparingDouble(sv -> sv.score).reversed())
+            .sorted(Comparator.comparingDouble((ScoredVolunteer sv) -> sv.score).reversed())
             .collect(Collectors.toList());
 
         // Get top N recommendations

@@ -24,7 +24,7 @@
    - `src/components/` - Reusable UI components
 
 ### **Configuration Files:**
-   - `.env.local` - Environment variables (API_URL=http://localhost:8080/api)
+   - `.env.local` - Environment variables (API_URL=http://localhost:8081/api)
 
 ---
 
@@ -159,7 +159,7 @@ If you see CORS errors, ensure backend has proper CORS configuration:
 Check `SecurityConfig.java` - should be already configured.
 
 ### **API Connection Failed:**
-1. Verify backend is running: `http://localhost:8080/api/status`
+1. Verify backend is running: `http://localhost:8081/api/status`
 2. Check `.env.local` has correct `VITE_API_URL`
 3. Check browser console for error messages
 

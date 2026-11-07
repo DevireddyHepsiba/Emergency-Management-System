@@ -3,6 +3,9 @@ package com.example.sentinelos.controller;
 import com.example.sentinelos.dto.EmergencyRequest;
 import com.example.sentinelos.dto.EmergencyResponse;
 import com.example.sentinelos.service.EmergencyService;
+import com.example.sentinelos.service.ResourceMatchingService;
+import com.example.sentinelos.dto.TriageRequest;
+import com.example.sentinelos.dto.DispatchRecommendations;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -17,6 +20,7 @@ import java.util.List;
 public class EmergencyController {
 
     private final EmergencyService emergencyService;
+    private final ResourceMatchingService resourceMatchingService;
 
     @PostMapping("/report")
     public ResponseEntity<EmergencyResponse> reportEmergency(
@@ -46,6 +50,24 @@ public class EmergencyController {
     public ResponseEntity<List<EmergencyResponse>> getReportedEmergencies() {
         List<EmergencyResponse> emergencies = emergencyService.getReportedEmergencies();
         return ResponseEntity.ok(emergencies);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<EmergencyResponse>> getAllEmergencies() {
+        return ResponseEntity.ok(emergencyService.getAllEmergencies());
+    }
+
+    @PutMapping("/{emergencyId}/triage")
+    public ResponseEntity<EmergencyResponse> triageEmergency(
+            @PathVariable String emergencyId,
+            @RequestBody TriageRequest request,
+            Authentication authentication) {
+        return ResponseEntity.ok(emergencyService.triageEmergency(emergencyId, request, authentication.getName()));
+    }
+
+    @GetMapping("/{emergencyId}/recommendations")
+    public ResponseEntity<DispatchRecommendations> getRecommendations(@PathVariable String emergencyId) {
+        return ResponseEntity.ok(resourceMatchingService.recommend(emergencyId));
     }
 
     @GetMapping("/priority/{priority}")

@@ -10,6 +10,7 @@ import java.util.Optional;
 
 @Repository
 public interface EmergencyRepository extends MongoRepository<Emergency, String> {
+    long countByStatus(String status);
     List<Emergency> findByUserId(String userId);
     
     List<Emergency> findByStatus(String status);
@@ -21,6 +22,8 @@ public interface EmergencyRepository extends MongoRepository<Emergency, String> 
     List<Emergency> findByCreatedAtAfter(LocalDateTime dateTime);
     
     List<Emergency> findByStatusOrderByCreatedAtDesc(String status);
+
+    List<Emergency> findAllByOrderByCreatedAtDesc();
     
     Optional<Emergency> findById(String id);
 }

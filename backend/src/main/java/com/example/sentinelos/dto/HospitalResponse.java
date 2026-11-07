@@ -13,6 +13,7 @@ public class HospitalResponse {
     private String id;
     private String name;
     private Integer bedsAvailable;
+    private Integer cardiacBedsAvailable;
     private Integer icuAvailable;
     private Integer ambulances;
     private Double latitude;
@@ -22,5 +23,7 @@ public class HospitalResponse {
     private String phone;
     private Double distanceKm;
     private String message;
+    private java.util.List<String> services;
+    private java.time.LocalDateTime capacityUpdatedAt;
 }
 

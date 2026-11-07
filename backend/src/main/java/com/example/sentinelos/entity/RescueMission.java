@@ -19,6 +19,7 @@ public class RescueMission {
     @Id
     private String id;
     private String missionCode; // M-8291, M-8290, etc.
+    private String emergencyId;
     private String title;
     private String description;
     private String location;
@@ -33,6 +34,12 @@ public class RescueMission {
     private Double distance; // Distance in KM
     private String assignedTeam;
     private String assignedVehicle;
+    private String ambulanceId;
+    private Boolean teamAccepted;
+    private Boolean hospitalAccepted;
+    private String teamAcceptedBy;
+    private String hospitalAcceptedBy;
+    private String requiredBedType;
     
     private List<String> responders;
     private String hospitalId;
@@ -40,6 +47,8 @@ public class RescueMission {
     private LocalDateTime updatedAt;
     private LocalDateTime reachedAt;
     private LocalDateTime completedAt;
+    private LocalDateTime teamAcceptedAt;
+    private LocalDateTime hospitalAcceptedAt;
     
     private String routePath; // Optimized route coordinates
 }

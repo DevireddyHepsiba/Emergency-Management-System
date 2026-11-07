@@ -32,7 +32,7 @@
 
 ### **Configuration (1 file)**
 - ✅ `.env.local` - Environment variables
-  - `VITE_API_URL=http://localhost:8080/api`
+  - `VITE_API_URL=http://localhost:8081/api`
 
 ### **Documentation (4 files)**
 - ✅ `FRONTEND_SETUP_GUIDE.md` - Complete setup instructions
@@ -302,7 +302,7 @@ App (Router)
 
 ### **.env.local**
 ```
-VITE_API_URL=http://localhost:8080/api
+VITE_API_URL=http://localhost:8081/api
 ```
 
 ### **vite.config.ts**

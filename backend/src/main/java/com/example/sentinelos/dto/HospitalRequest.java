@@ -12,11 +12,13 @@ import lombok.NoArgsConstructor;
 public class HospitalRequest {
     private String name;
     private Integer bedsAvailable;
+    private Integer cardiacBedsAvailable;
     private Integer icuAvailable;
     private Integer ambulances;
     private Double latitude;
     private Double longitude;
     private String address;
     private String phone;
+    private java.util.List<String> services;
 }
 

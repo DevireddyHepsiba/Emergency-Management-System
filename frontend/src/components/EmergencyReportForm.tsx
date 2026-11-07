@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import * as api from "@/services/api";
+import { LocationPickerMap } from "@/components/LocationPickerMap";
 
 export function EmergencyReportForm() {
   const [formData, setFormData] = useState({
@@ -23,6 +24,9 @@ export function EmergencyReportForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [reportedId, setReportedId] = useState<string | null>(null);
+  const [locationConfirmed, setLocationConfirmed] = useState(false);
+  const [manualCoordinates, setManualCoordinates] = useState({ latitude: false, longitude: false });
   const [geoError, setGeoError] = useState<string | null>(null);
 
   // Get user's current location
@@ -30,6 +34,7 @@ export function EmergencyReportForm() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          setLocationConfirmed(true);
           setFormData((prev) => ({
             ...prev,
             latitude: position.coords.latitude,
@@ -51,8 +56,14 @@ export function EmergencyReportForm() {
     setError(null);
     setSuccess(false);
 
+    if (!locationConfirmed || !Number.isFinite(formData.latitude) || !Number.isFinite(formData.longitude) || formData.latitude < -90 || formData.latitude > 90 || formData.longitude < -180 || formData.longitude > 180) {
+      setError("Set a valid location with the location button or enter both coordinates manually.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      await api.reportEmergency({
+      const result = await api.reportEmergency({
         fullName: formData.fullName,
         mobileNumber: formData.mobileNumber,
         emergencyType: formData.emergencyType as any,
@@ -64,6 +75,7 @@ export function EmergencyReportForm() {
       });
 
       setSuccess(true);
+      setReportedId(result.id || null);
       setFormData({
         fullName: "",
         mobileNumber: "",
@@ -75,7 +87,6 @@ export function EmergencyReportForm() {
         hasMedicalEmergency: false,
       });
 
-      setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to report emergency");
     } finally {
@@ -102,7 +113,8 @@ export function EmergencyReportForm() {
       {success && (
         <Alert className="mb-4 border-green-200 bg-green-50">
           <AlertDescription className="text-green-800">
-            ✅ Emergency reported successfully! Rescue teams are being notified.
+            ✅ Report received and saved. This does not mean an ambulance has been dispatched.
+            {reportedId && <span className="mt-1 block">Keep this tracking ID: {reportedId}. Follow updates in My Reports.</span>}
           </AlertDescription>
         </Alert>
       )}
@@ -179,8 +191,10 @@ export function EmergencyReportForm() {
               id="latitude"
               type="number"
               step="0.0001"
+              min="-90"
+              max="90"
               value={formData.latitude}
-              onChange={(e) => setFormData({ ...formData, latitude: parseFloat(e.target.value) })}
+              onChange={(e) => { const entered = { ...manualCoordinates, latitude: true }; setManualCoordinates(entered); if (entered.longitude) setLocationConfirmed(true); setFormData({ ...formData, latitude: parseFloat(e.target.value) }); }}
             />
           </div>
 
@@ -190,11 +204,15 @@ export function EmergencyReportForm() {
               id="longitude"
               type="number"
               step="0.0001"
+              min="-180"
+              max="180"
               value={formData.longitude}
-              onChange={(e) => setFormData({ ...formData, longitude: parseFloat(e.target.value) })}
+              onChange={(e) => { const entered = { ...manualCoordinates, longitude: true }; setManualCoordinates(entered); if (entered.latitude) setLocationConfirmed(true); setFormData({ ...formData, longitude: parseFloat(e.target.value) }); }}
             />
           </div>
         </div>
+
+        <LocationPickerMap latitude={formData.latitude} longitude={formData.longitude} onSelect={(latitude, longitude) => { setFormData((current) => ({ ...current, latitude, longitude })); setLocationConfirmed(true); setManualCoordinates({ latitude: true, longitude: true }); setGeoError(null); }} />
 
         <div className="flex items-center space-x-2">
           <input

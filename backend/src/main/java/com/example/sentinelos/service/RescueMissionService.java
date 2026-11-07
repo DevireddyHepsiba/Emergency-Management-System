@@ -3,13 +3,21 @@ package com.example.sentinelos.service;
 import com.example.sentinelos.dto.RescueMissionRequest;
 import com.example.sentinelos.dto.RescueMissionResponse;
 import com.example.sentinelos.entity.RescueMission;
+import com.example.sentinelos.entity.Emergency;
+import com.example.sentinelos.entity.EmergencyStatusEvent;
+import com.example.sentinelos.entity.AmbulanceUnit;
+import com.example.sentinelos.dto.DispatchRecommendations;
 import com.example.sentinelos.exception.UnauthorizedException;
 import com.example.sentinelos.repository.RescueMissionRepository;
+import com.example.sentinelos.repository.EmergencyRepository;
+import com.example.sentinelos.repository.AmbulanceUnitRepository;
+import com.example.sentinelos.service.ResourceMatchingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -17,37 +25,99 @@ import java.util.stream.Collectors;
 public class RescueMissionService {
 
     private final RescueMissionRepository rescueMissionRepository;
-    private static int missionCounter = 8290;
-
+    private final EmergencyRepository emergencyRepository;
+    private final AmbulanceUnitRepository ambulanceRepository;
+    private final ResourceMatchingService resourceMatchingService;
     public RescueMissionResponse createMission(RescueMissionRequest request) {
-        String missionCode = "M-" + (++missionCounter);
-        
-        // Calculate ETA and distance
-        Integer eta = calculateETA(request.getLatitude(), request.getLongitude());
-        Double distance = calculateDistance(request.getLatitude(), request.getLongitude());
+        if (request.getEmergencyId() == null || request.getEmergencyId().isBlank()) throw new UnauthorizedException("Select a triaged emergency");
+        Emergency emergency = emergencyRepository.findById(request.getEmergencyId())
+                .orElseThrow(() -> new UnauthorizedException("Emergency report not found"));
+        if (!"TRIAGED".equals(emergency.getStatus())) throw new UnauthorizedException("Only triaged incidents can be dispatched");
+
+        DispatchRecommendations recommendations = resourceMatchingService.recommend(emergency.getId());
+        boolean hospitalRequired = !"NONE".equalsIgnoreCase(emergency.getRequiredBedType());
+        if (hospitalRequired && (request.getHospitalId() == null || recommendations.getHospitals().stream().noneMatch(h -> h.getId().equals(request.getHospitalId())))) {
+            throw new UnauthorizedException("Choose a hospital from the current suitable recommendations");
+        }
+        boolean ambulanceRequired = Boolean.TRUE.equals(emergency.getNeedsAmbulance());
+        if (ambulanceRequired && (request.getAmbulanceId() == null || recommendations.getAmbulances().stream().noneMatch(a -> a.getId().equals(request.getAmbulanceId())))) {
+            throw new UnauthorizedException("Choose an available ambulance matching the triage requirement");
+        }
+
+        AmbulanceUnit ambulance = request.getAmbulanceId() == null ? null : ambulanceRepository.findById(request.getAmbulanceId())
+                .orElseThrow(() -> new UnauthorizedException("Ambulance not found"));
+        String missionCode = "M-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
 
         RescueMission mission = RescueMission.builder()
                 .missionCode(missionCode)
-                .title(request.getTitle())
-                .description(request.getDescription())
-                .location(request.getLocation())
-                .latitude(request.getLatitude())
-                .longitude(request.getLongitude())
-                .victims(request.getVictims())
-                .missionType(request.getMissionType())
-                .priority(request.getPriority())
-                .status("ASSIGNED")
-                .eta(eta)
-                .distance(distance)
-                .assignedTeam(request.getAssignedTeam())
+                .emergencyId(emergency.getId())
+                .title(emergency.getEmergencyType() + " response")
+                .description(emergency.getDescription())
+                .location(emergency.getLatitude() + ", " + emergency.getLongitude())
+                .latitude(emergency.getLatitude())
+                .longitude(emergency.getLongitude())
+                .victims(emergency.getVictims())
+                .missionType(emergency.getEmergencyType())
+                .priority(emergency.getPriority())
+                .status("OFFERED")
+                .eta(null)
+                .distance(null)
+                .ambulanceId(request.getAmbulanceId())
+                .assignedVehicle(ambulance == null ? null : ambulance.getCallSign())
+                .assignedTeam(ambulance == null ? null : ambulance.getType())
                 .hospitalId(request.getHospitalId())
+                .requiredBedType(emergency.getRequiredBedType())
+                .teamAccepted(!ambulanceRequired)
+                .hospitalAccepted(!hospitalRequired)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
 
         mission = rescueMissionRepository.save(mission);
+        if (ambulance != null) {
+            ambulance.setStatus("OFFERED");
+            ambulance.setUpdatedAt(LocalDateTime.now());
+            ambulanceRepository.save(ambulance);
+        }
+        if (Boolean.TRUE.equals(mission.getTeamAccepted()) && Boolean.TRUE.equals(mission.getHospitalAccepted())) {
+            mission.setStatus("ACCEPTED");
+            mission = rescueMissionRepository.save(mission);
+            updateIncidentStatus(emergency.getId(), "DISPATCHED", "No external resource acceptance was required", "dispatch-workflow");
+        }
 
-        return mapToResponse(mission, "Mission created: " + missionCode);
+        return mapToResponse(mission, "Response offer created. It is not dispatched until the required parties accept.");
+    }
+
+    public RescueMissionResponse recordAcceptance(String missionId, String side, boolean accepted, String actorEmail) {
+        RescueMission mission = rescueMissionRepository.findById(missionId)
+                .orElseThrow(() -> new UnauthorizedException("Mission not found"));
+        if (!"OFFERED".equals(mission.getStatus())) throw new UnauthorizedException("Only offered missions can receive an acceptance decision");
+        if ("TEAM".equalsIgnoreCase(side)) {
+            if (mission.getAmbulanceId() == null) throw new UnauthorizedException("This mission has no ambulance assignment");
+            mission.setTeamAccepted(accepted);
+            if (accepted) { mission.setTeamAcceptedAt(LocalDateTime.now()); mission.setTeamAcceptedBy(actorEmail); }
+        } else if ("HOSPITAL".equalsIgnoreCase(side)) {
+            if (mission.getHospitalId() == null) throw new UnauthorizedException("This mission has no hospital referral");
+            mission.setHospitalAccepted(accepted);
+            if (accepted) { mission.setHospitalAcceptedAt(LocalDateTime.now()); mission.setHospitalAcceptedBy(actorEmail); }
+        } else {
+            throw new UnauthorizedException("Unknown acceptance type");
+        }
+
+        if (!accepted) {
+            mission.setStatus("DECLINED");
+            if (mission.getAmbulanceId() != null) ambulanceRepository.findById(mission.getAmbulanceId()).ifPresent(unit -> {
+                unit.setStatus("AVAILABLE"); unit.setUpdatedAt(LocalDateTime.now()); ambulanceRepository.save(unit);
+            });
+        } else if (Boolean.TRUE.equals(mission.getTeamAccepted()) && Boolean.TRUE.equals(mission.getHospitalAccepted())) {
+            mission.setStatus("ACCEPTED");
+            if (mission.getAmbulanceId() != null) ambulanceRepository.findById(mission.getAmbulanceId()).ifPresent(unit -> {
+                unit.setStatus("ASSIGNED"); unit.setUpdatedAt(LocalDateTime.now()); ambulanceRepository.save(unit);
+            });
+            updateIncidentStatus(mission.getEmergencyId(), "DISPATCHED", "Required team and hospital acceptances recorded", actorEmail);
+        }
+        mission.setUpdatedAt(LocalDateTime.now());
+        return mapToResponse(rescueMissionRepository.save(mission), accepted ? "Acceptance recorded" : "Offer declined; dispatcher must select another resource");
     }
 
     public List<RescueMissionResponse> getActiveMissions() {
@@ -72,6 +142,18 @@ public class RescueMissionService {
         RescueMission mission = rescueMissionRepository.findById(missionId)
                 .orElseThrow(() -> new UnauthorizedException("Mission not found"));
 
+        boolean validTransition = switch (mission.getStatus()) {
+            case "ACCEPTED" -> "EN_ROUTE".equals(newStatus);
+            case "EN_ROUTE" -> "REACHED".equals(newStatus);
+            case "REACHED" -> "TRANSPORTING".equals(newStatus);
+            case "TRANSPORTING" -> "ARRIVED".equals(newStatus);
+            case "ARRIVED" -> "COMPLETED".equals(newStatus);
+            default -> false;
+        };
+        if (!validTransition) {
+            throw new UnauthorizedException("Invalid mission status transition: " + mission.getStatus() + " to " + newStatus);
+        }
+
         mission.setStatus(newStatus);
         mission.setUpdatedAt(LocalDateTime.now());
         
@@ -82,7 +164,32 @@ public class RescueMissionService {
         }
 
         mission = rescueMissionRepository.save(mission);
+        if ("REACHED".equals(newStatus)) updateIncidentStatus(mission.getEmergencyId(), "ON_SCENE", "Response team reached the incident", "response-team");
+        if ("TRANSPORTING".equals(newStatus)) updateIncidentStatus(mission.getEmergencyId(), "TRANSPORTING", "Patient transport started", "response-team");
+        if ("ARRIVED".equals(newStatus)) updateIncidentStatus(mission.getEmergencyId(), "ARRIVED", "Patient arrived at the receiving hospital", "response-team");
+        if ("COMPLETED".equals(newStatus)) {
+            String completedMissionId = mission.getId();
+            String completedEmergencyId = mission.getEmergencyId();
+            if (mission.getAmbulanceId() != null) ambulanceRepository.findById(mission.getAmbulanceId()).ifPresent(unit -> {
+                unit.setStatus("AVAILABLE"); unit.setUpdatedAt(LocalDateTime.now()); ambulanceRepository.save(unit);
+            });
+            boolean otherOpenMissions = rescueMissionRepository.findByEmergencyId(completedEmergencyId).stream()
+                    .anyMatch(other -> !other.getId().equals(completedMissionId) && !"COMPLETED".equals(other.getStatus()) && !"DECLINED".equals(other.getStatus()));
+            if (!otherOpenMissions) updateIncidentStatus(completedEmergencyId, "RESOLVED", "Response mission completed", "response-team");
+        }
         return mapToResponse(mission, "Mission status updated to " + newStatus);
+    }
+
+    private void updateIncidentStatus(String emergencyId, String status, String note, String actor) {
+        if (emergencyId == null) return;
+        emergencyRepository.findById(emergencyId).ifPresent(emergency -> {
+            emergency.setStatus(status);
+            emergency.setUpdatedAt(LocalDateTime.now());
+            if (emergency.getStatusHistory() == null) emergency.setStatusHistory(new java.util.ArrayList<>());
+            emergency.getStatusHistory().add(EmergencyStatusEvent.builder().status(status).changedBy(actor)
+                    .note(note).changedAt(LocalDateTime.now()).build());
+            emergencyRepository.save(emergency);
+        });
     }
 
     public RescueMissionResponse updateMissionETA(String missionId, Integer newETA) {
@@ -108,43 +215,32 @@ public class RescueMissionService {
                 .collect(Collectors.toList());
     }
 
-    // Calculate ETA based on distance (simple heuristic: assume 60 km/h average speed)
-    private Integer calculateETA(Double latitude, Double longitude) {
-        // Simplified: return random ETA between 4-9 minutes
-        double random = Math.random() * 5 + 4;
-        return (int) random;
-    }
-
-    // Calculate distance (Haversine formula from reference point)
-    private Double calculateDistance(Double lat, Double lon) {
-        // Reference point: NYC (40.7128, -74.0060)
-        double refLat = 40.7128;
-        double refLon = -74.0060;
-        
-        final int R = 6371; // Earth radius in km
-        double dLat = Math.toRadians(lat - refLat);
-        double dLon = Math.toRadians(lon - refLon);
-        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(Math.toRadians(refLat)) * Math.cos(Math.toRadians(lat)) *
-                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return Math.round(R * c * 100.0) / 100.0;
-    }
-
     private RescueMissionResponse mapToResponse(RescueMission mission, String message) {
         return RescueMissionResponse.builder()
                 .id(mission.getId())
                 .missionCode(mission.getMissionCode())
+                .emergencyId(mission.getEmergencyId())
                 .title(mission.getTitle())
+                .description(mission.getDescription())
                 .location(mission.getLocation())
+                .latitude(mission.getLatitude())
+                .longitude(mission.getLongitude())
                 .victims(mission.getVictims())
+                .missionType(mission.getMissionType())
                 .status(mission.getStatus())
                 .priority(mission.getPriority())
                 .eta(mission.getEta())
                 .distance(mission.getDistance())
                 .assignedTeam(mission.getAssignedTeam())
+                .assignedVehicle(mission.getAssignedVehicle())
                 .responders(mission.getResponders())
                 .hospitalId(mission.getHospitalId())
+                .ambulanceId(mission.getAmbulanceId())
+                .teamAccepted(mission.getTeamAccepted())
+                .hospitalAccepted(mission.getHospitalAccepted())
+                .requiredBedType(mission.getRequiredBedType())
+                .teamAcceptedBy(mission.getTeamAcceptedBy())
+                .hospitalAcceptedBy(mission.getHospitalAcceptedBy())
                 .message(message)
                 .build();
     }

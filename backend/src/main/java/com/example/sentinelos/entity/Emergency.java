@@ -47,5 +47,19 @@ public class Emergency {
     private String assignedTo; // User ID of responder
 
     private String notes;
+
+    private List<String> requiredServices;
+
+    private String requiredBedType;
+
+    private String ambulanceCapability;
+
+    private Boolean needsAmbulance;
+
+    private String triageNotes;
+
+    private String dispatcherId;
+
+    private List<EmergencyStatusEvent> statusHistory;
 }
 

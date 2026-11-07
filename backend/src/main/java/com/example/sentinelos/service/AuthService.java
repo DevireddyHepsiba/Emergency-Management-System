@@ -12,6 +12,7 @@ import com.example.sentinelos.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +32,8 @@ public class AuthService {
         }
 
         // Find user
-        User user = userRepository.findByEmail(request.getEmail())
+        String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
         // Verify password
@@ -44,16 +46,19 @@ public class AuthService {
 
         return LoginResponse.builder()
                 .token(token)
+                .userId(user.getId())
                 .email(user.getEmail())
                 .name(user.getName())
                 .role(user.getRole().toString())
+                .hospitalId(user.getHospitalId())
                 .message("Login successful")
                 .build();
     }
 
     public RegisterResponse register(RegisterRequest request) {
+        String email = request.getEmail() == null ? null : request.getEmail().trim().toLowerCase(Locale.ROOT);
         // Validate input
-        if (request.getEmail() == null || request.getEmail().isEmpty()) {
+        if (email == null || email.isEmpty()) {
             throw new UnauthorizedException("Email is required");
         }
         if (request.getPassword() == null || request.getPassword().isEmpty()) {
@@ -64,16 +69,29 @@ public class AuthService {
         }
 
         // Check if user already exists
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+        if (userRepository.findByEmail(email).isPresent()) {
             throw new UnauthorizedException("Email already registered");
+        }
+
+        Role role;
+        try {
+            role = Role.valueOf(request.getRole() != null ? request.getRole().toUpperCase() : "CITIZEN");
+        } catch (IllegalArgumentException exception) {
+            throw new UnauthorizedException("Invalid role");
+        }
+        if (role == Role.ADMIN) {
+            throw new UnauthorizedException("Administrator accounts must be created through the administrator console");
+        }
+        if (role != Role.CITIZEN && role != Role.VOLUNTEER) {
+            throw new UnauthorizedException("Public registration is limited to citizen and volunteer accounts");
         }
 
         // Create new user
         User user = User.builder()
                 .name(request.getName())
-                .email(request.getEmail())
+                .email(email)
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.valueOf(request.getRole() != null ? request.getRole() : "CITIZEN"))
+                .role(role)
                 .latitude(request.getLatitude())
                 .longitude(request.getLongitude())
                 .build();
@@ -85,6 +103,7 @@ public class AuthService {
                 .email(user.getEmail())
                 .name(user.getName())
                 .role(user.getRole().toString())
+                
                 .message("Registration successful")
                 .build();
     }

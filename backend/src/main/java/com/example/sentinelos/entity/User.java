@@ -25,6 +25,8 @@ public class User {
 
     private Role role;
 
+    private String hospitalId;
+
     private Double latitude;
 
     private Double longitude;

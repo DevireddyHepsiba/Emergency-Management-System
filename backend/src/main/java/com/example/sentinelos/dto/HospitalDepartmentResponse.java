@@ -1,4 +1,4 @@
-ceepackage com.example.sentinelos.dto;
+package com.example.sentinelos.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,0 +1,19 @@
+# SentinelOS
+
+> SentinelOS is a project platform for human-reviewed emergency response coordination. It connects incident reports with dispatcher triage, hospital capacity, response team offers, and volunteer tasks.
+
+## Public overview
+
+- [How the platform works](/#how-it-works): report, dispatch review, and response workflow.
+- [Who the platform serves](/#who-its-for): citizens, dispatchers, hospitals, response teams, and volunteers.
+- [Create an account](/register): public sign-up for citizens and volunteers.
+- [Full project and capability description](/llms-full.txt)
+
+## Important limitations
+
+- SentinelOS does not automatically dispatch emergency services.
+- Creating a response offer does not mean the hospital or response team accepted it.
+- Resource recommendations depend on stored hospital capacity, service tags, ambulance availability, and recent location updates.
+- Map distances are straight-line estimates unless a separate routing service is configured.
+- The platform does not replace local emergency services or emergency phone numbers.
+- Operational pages require authentication and must not be treated as public content.

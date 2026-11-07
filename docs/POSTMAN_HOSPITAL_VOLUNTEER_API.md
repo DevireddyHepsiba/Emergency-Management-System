@@ -4,7 +4,7 @@
 
 ### 1. ADD NEW HOSPITAL
 ```
-POST http://localhost:8080/api/hospital/add
+POST http://localhost:8081/api/hospital/add
 Content-Type: application/json
 
 {
@@ -36,7 +36,7 @@ Content-Type: application/json
 
 ### 2. GET ALL HOSPITALS
 ```
-GET http://localhost:8080/api/hospital/all
+GET http://localhost:8081/api/hospital/all
 Content-Type: application/json
 ```
 
@@ -66,7 +66,7 @@ Content-Type: application/json
 
 ### 3. FIND NEAREST HOSPITAL (By GPS Coordinates)
 ```
-GET http://localhost:8080/api/hospital/nearest?latitude=40.7128&longitude=-74.0060
+GET http://localhost:8081/api/hospital/nearest?latitude=40.7128&longitude=-74.0060
 Content-Type: application/json
 ```
 
@@ -87,7 +87,7 @@ Content-Type: application/json
 
 ### 4. GET SPECIFIC HOSPITAL
 ```
-GET http://localhost:8080/api/hospital/6a17c0dc1dace03730129aa0
+GET http://localhost:8081/api/hospital/6a17c0dc1dace03730129aa0
 Content-Type: application/json
 ```
 
@@ -111,7 +111,7 @@ Content-Type: application/json
 
 ### 5. UPDATE HOSPITAL STATUS (Step through care workflow)
 ```
-PUT http://localhost:8080/api/hospital/6a17c0dc1dace03730129aa0/status?status=PREPARING
+PUT http://localhost:8081/api/hospital/6a17c0dc1dace03730129aa0/status?status=PREPARING
 Content-Type: application/json
 ```
 
@@ -135,7 +135,7 @@ Content-Type: application/json
 
 ### 6. UPDATE HOSPITAL RESOURCES (Track resource availability)
 ```
-PUT http://localhost:8080/api/hospital/6a17c0dc1dace03730129aa0/resources?beds=45&icu=8&ambulances=4
+PUT http://localhost:8081/api/hospital/6a17c0dc1dace03730129aa0/resources?beds=45&icu=8&ambulances=4
 Content-Type: application/json
 ```
 
@@ -157,7 +157,7 @@ Content-Type: application/json
 
 ### 7. CREATE VOLUNTEER TASK
 ```
-POST http://localhost:8080/api/volunteer/task/create
+POST http://localhost:8081/api/volunteer/task/create
 Content-Type: application/json
 
 {
@@ -190,7 +190,7 @@ Content-Type: application/json
 
 ### 8. GET ALL VOLUNTEER TASKS
 ```
-GET http://localhost:8080/api/volunteer/task/all
+GET http://localhost:8081/api/volunteer/task/all
 Content-Type: application/json
 ```
 
@@ -222,7 +222,7 @@ Content-Type: application/json
 
 ### 9. GET TASKS BY STATUS
 ```
-GET http://localhost:8080/api/volunteer/task/status/TASK_CREATED
+GET http://localhost:8081/api/volunteer/task/status/TASK_CREATED
 Content-Type: application/json
 ```
 
@@ -251,7 +251,7 @@ Content-Type: application/json
 
 ### 10. GET TASKS BY EMERGENCY
 ```
-GET http://localhost:8080/api/volunteer/task/emergency/6a17b7dc1dacd03730129bc0
+GET http://localhost:8081/api/volunteer/task/emergency/6a17b7dc1dacd03730129bc0
 Content-Type: application/json
 ```
 
@@ -273,7 +273,7 @@ Content-Type: application/json
 
 ### 11. GET TASKS BY LOCATION
 ```
-GET http://localhost:8080/api/volunteer/task/location/Sector%209
+GET http://localhost:8081/api/volunteer/task/location/Sector%209
 Content-Type: application/json
 ```
 
@@ -296,7 +296,7 @@ Content-Type: application/json
 
 ### 12. ASSIGN VOLUNTEER TO TASK
 ```
-PUT http://localhost:8080/api/volunteer/task/6a17c0dc1dace03730129bb0/assign/volunteer_user_123
+PUT http://localhost:8081/api/volunteer/task/6a17c0dc1dace03730129bb0/assign/volunteer_user_123
 Content-Type: application/json
 ```
 
@@ -317,7 +317,7 @@ Content-Type: application/json
 
 ### 13. ADVANCE TASK STATUS (Step through workflow)
 ```
-PUT http://localhost:8080/api/volunteer/task/6a17c0dc1dace03730129bb0/advance
+PUT http://localhost:8081/api/volunteer/task/6a17c0dc1dace03730129bb0/advance
 Content-Type: application/json
 ```
 
@@ -360,7 +360,7 @@ Content-Type: application/json
 
 ### 14. UPDATE TASK STATUS (Direct status change)
 ```
-PUT http://localhost:8080/api/volunteer/task/6a17c0dc1dace03730129bb0/status?status=ON_FIELD
+PUT http://localhost:8081/api/volunteer/task/6a17c0dc1dace03730129bb0/status?status=ON_FIELD
 Content-Type: application/json
 ```
 
@@ -378,7 +378,7 @@ Content-Type: application/json
 
 ### 15. COMPLETE TASK
 ```
-PUT http://localhost:8080/api/volunteer/task/6a17c0dc1dace03730129bb0/complete
+PUT http://localhost:8081/api/volunteer/task/6a17c0dc1dace03730129bb0/complete
 Content-Type: application/json
 ```
 
@@ -400,23 +400,23 @@ Content-Type: application/json
 
 **Step 1: Submit Emergency Report** (No auth required)
 ```
-POST http://localhost:8080/api/emergency/report
+POST http://localhost:8081/api/emergency/report
 ```
 
 **Step 2: Find Nearest Hospital**
 ```
-GET http://localhost:8080/api/hospital/nearest?latitude=40.7128&longitude=-74.0060
+GET http://localhost:8081/api/hospital/nearest?latitude=40.7128&longitude=-74.0060
 ```
 
 **Step 3: Update Hospital Status** (As emergency develops)
 ```
-PUT http://localhost:8080/api/hospital/{hospitalId}/status?status=PREPARING
-PUT http://localhost:8080/api/hospital/{hospitalId}/status?status=PATIENT_RECEIVED
+PUT http://localhost:8081/api/hospital/{hospitalId}/status?status=PREPARING
+PUT http://localhost:8081/api/hospital/{hospitalId}/status?status=PATIENT_RECEIVED
 ```
 
 **Step 4: Create Volunteer Tasks**
 ```
-POST http://localhost:8080/api/volunteer/task/create
+POST http://localhost:8081/api/volunteer/task/create
   - Task 1: Evacuation Support
   - Task 2: Medical Assistance
   - Task 3: Supply Distribution
@@ -424,18 +424,18 @@ POST http://localhost:8080/api/volunteer/task/create
 
 **Step 5: Assign Volunteers & Track Progress**
 ```
-PUT http://localhost:8080/api/volunteer/task/{taskId}/assign/{volunteerId}
-PUT http://localhost:8080/api/volunteer/task/{taskId}/advance  (Multiple times)
+PUT http://localhost:8081/api/volunteer/task/{taskId}/assign/{volunteerId}
+PUT http://localhost:8081/api/volunteer/task/{taskId}/advance  (Multiple times)
 ```
 
 **Step 6: Monitor Resources**
 ```
-PUT http://localhost:8080/api/hospital/{hospitalId}/resources?beds=40&icu=7&ambulances=3
+PUT http://localhost:8081/api/hospital/{hospitalId}/resources?beds=40&icu=7&ambulances=3
 ```
 
 **Step 7: Get Task Status by Emergency**
 ```
-GET http://localhost:8080/api/volunteer/task/emergency/{emergencyId}
+GET http://localhost:8081/api/volunteer/task/emergency/{emergencyId}
 ```
 
 ---

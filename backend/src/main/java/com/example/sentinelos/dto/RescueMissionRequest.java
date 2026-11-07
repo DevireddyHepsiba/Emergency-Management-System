@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RescueMissionRequest {
+    private String emergencyId;
     private String title;
     private String description;
     private String location;
@@ -20,5 +21,7 @@ public class RescueMissionRequest {
     private String priority;
     private String assignedTeam;
     private String hospitalId;
+    private String ambulanceId;
+    private String requiredBedType;
 }
 

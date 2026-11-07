@@ -9,7 +9,7 @@
 ### **Objective:** Verify user can create account and authenticate successfully
 
 ### **Prerequisites:**
-- System running on `http://localhost:8080` (backend) and `http://localhost:5173` (frontend)
+- System running on `http://localhost:8081` (backend) and `http://localhost:5173` (frontend)
 - MongoDB Atlas connected
 - No existing account with username "testvolunteer1"
 

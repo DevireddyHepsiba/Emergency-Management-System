@@ -3,6 +3,8 @@ package com.example.sentinelos.service;
 import com.example.sentinelos.dto.EmergencyRequest;
 import com.example.sentinelos.dto.EmergencyResponse;
 import com.example.sentinelos.entity.Emergency;
+import com.example.sentinelos.entity.EmergencyStatusEvent;
+import com.example.sentinelos.dto.TriageRequest;
 import com.example.sentinelos.exception.UnauthorizedException;
 import com.example.sentinelos.repository.EmergencyRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +38,19 @@ public class EmergencyService {
         if (request.getEmergencyType() == null || request.getEmergencyType().isEmpty()) {
             throw new UnauthorizedException("Emergency type is required");
         }
+        if (!List.of("MEDICAL", "FIRE", "FLOOD", "ACCIDENT", "EARTHQUAKE", "OTHER")
+                .contains(request.getEmergencyType().toUpperCase())) {
+            throw new UnauthorizedException("Invalid emergency type");
+        }
         if (request.getLatitude() == null || request.getLongitude() == null) {
             throw new UnauthorizedException("Location (latitude and longitude) is required");
+        }
+        if (request.getLatitude() < -90 || request.getLatitude() > 90
+                || request.getLongitude() < -180 || request.getLongitude() > 180) {
+            throw new UnauthorizedException("Location coordinates are outside the valid range");
+        }
+        if (request.getVictims() != null && request.getVictims() < 1) {
+            throw new UnauthorizedException("Victim count must be at least one");
         }
 
         // Determine priority based on emergency type
@@ -48,14 +61,16 @@ public class EmergencyService {
                 .userId(userId)
                 .fullName(request.getFullName())
                 .mobileNumber(request.getMobileNumber())
-                .emergencyType(request.getEmergencyType())
+                .emergencyType(request.getEmergencyType().toUpperCase())
                 .description(request.getDescription() != null ? request.getDescription() : "")
                 .latitude(request.getLatitude())
                 .longitude(request.getLongitude())
-                .victims(request.getVictims() != null ? request.getVictims() : 0)
+                .victims(request.getVictims() != null ? request.getVictims() : 1)
                 .hasMedicalEmergency(request.getHasMedicalEmergency() != null ? request.getHasMedicalEmergency() : false)
                 .mediaUrls(request.getMediaUrls())
                 .status("REPORTED")
+                .statusHistory(new java.util.ArrayList<>(List.of(EmergencyStatusEvent.builder()
+                        .status("REPORTED").changedBy(userId).note("Report received").changedAt(LocalDateTime.now()).build())))
                 .priority(priority)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -87,6 +102,40 @@ public class EmergencyService {
                 .collect(Collectors.toList());
     }
 
+    public List<EmergencyResponse> getAllEmergencies() {
+        return emergencyRepository.findAllByOrderByCreatedAtDesc().stream()
+                .map(e -> mapToResponse(e, null))
+                .collect(Collectors.toList());
+    }
+
+    public EmergencyResponse triageEmergency(String emergencyId, TriageRequest request, String dispatcherId) {
+        Emergency emergency = emergencyRepository.findById(emergencyId)
+                .orElseThrow(() -> new UnauthorizedException("Emergency report not found"));
+        if (!"REPORTED".equals(emergency.getStatus())) {
+            throw new UnauthorizedException("Only new reports can enter triage");
+        }
+        if (request.getPriority() == null || !List.of("LOW", "MEDIUM", "HIGH", "CRITICAL").contains(request.getPriority().toUpperCase())) {
+            throw new UnauthorizedException("Choose a valid triage priority");
+        }
+        if (request.getRequiredBedType() == null || !List.of("GENERAL", "ICU", "CARDIAC", "NONE").contains(request.getRequiredBedType().toUpperCase())) {
+            throw new UnauthorizedException("Choose the required bed type");
+        }
+        emergency.setPriority(request.getPriority().toUpperCase());
+        emergency.setRequiredServices(request.getRequiredServices() == null ? List.of() : request.getRequiredServices());
+        emergency.setRequiredBedType(request.getRequiredBedType().toUpperCase());
+        emergency.setNeedsAmbulance(request.getNeedsAmbulance() == null || request.getNeedsAmbulance());
+        emergency.setAmbulanceCapability(request.getAmbulanceCapability());
+        emergency.setTriageNotes(request.getNotes());
+        emergency.setDispatcherId(dispatcherId);
+        emergency.setStatus("TRIAGED");
+        emergency.setUpdatedAt(LocalDateTime.now());
+        if (emergency.getStatusHistory() == null) emergency.setStatusHistory(new java.util.ArrayList<>());
+        emergency.getStatusHistory().add(EmergencyStatusEvent.builder().status("TRIAGED").changedBy(dispatcherId)
+                .note(request.getNotes() == null ? "Dispatcher completed triage" : request.getNotes())
+                .changedAt(LocalDateTime.now()).build());
+        return mapToResponse(emergencyRepository.save(emergency), "Triage saved; resources can now be matched");
+    }
+
     public List<EmergencyResponse> getEmergenciesByPriority(String priority) {
         List<Emergency> emergencies = emergencyRepository.findByPriority(priority);
         return emergencies.stream()
@@ -104,6 +153,10 @@ public class EmergencyService {
     public EmergencyResponse acknowledgeEmergency(String emergencyId, String responderUserId) {
         Emergency emergency = emergencyRepository.findById(emergencyId)
                 .orElseThrow(() -> new UnauthorizedException("Emergency report not found"));
+
+        if (!"REPORTED".equals(emergency.getStatus())) {
+            throw new UnauthorizedException("Only reported emergencies can be acknowledged");
+        }
         
         emergency.setStatus("ACKNOWLEDGED");
         emergency.setAssignedTo(responderUserId);
@@ -116,6 +169,16 @@ public class EmergencyService {
     public EmergencyResponse updateEmergencyStatus(String emergencyId, String newStatus) {
         Emergency emergency = emergencyRepository.findById(emergencyId)
                 .orElseThrow(() -> new UnauthorizedException("Emergency report not found"));
+
+        boolean validTransition = switch (emergency.getStatus()) {
+            case "REPORTED" -> "ACKNOWLEDGED".equals(newStatus);
+            case "ACKNOWLEDGED" -> "IN_PROGRESS".equals(newStatus);
+            case "IN_PROGRESS" -> "RESOLVED".equals(newStatus);
+            default -> false;
+        };
+        if (!validTransition) {
+            throw new UnauthorizedException("Invalid emergency status transition: " + emergency.getStatus() + " to " + newStatus);
+        }
         
         emergency.setStatus(newStatus);
         emergency.setUpdatedAt(LocalDateTime.now());
@@ -161,6 +224,13 @@ public class EmergencyService {
                 .createdAt(emergency.getCreatedAt())
                 .updatedAt(emergency.getUpdatedAt())
                 .message(message)
+                .requiredServices(emergency.getRequiredServices())
+                .requiredBedType(emergency.getRequiredBedType())
+                .ambulanceCapability(emergency.getAmbulanceCapability())
+                .needsAmbulance(emergency.getNeedsAmbulance())
+                .triageNotes(emergency.getTriageNotes())
+                .dispatcherId(emergency.getDispatcherId())
+                .statusHistory(emergency.getStatusHistory())
                 .build();
     }
 }

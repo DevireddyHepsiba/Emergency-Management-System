@@ -240,7 +240,7 @@ sentinelos/
 cd backend
 mvn spring-boot:run
 ```
-Backend runs at: `http://localhost:8080`
+Backend runs at: `http://localhost:8081`
 
 ### Frontend
 ```bash
@@ -469,7 +469,7 @@ npm run dev
 
 ### **Access**
 - Frontend: `http://localhost:5173`
-- Backend API: `http://localhost:8080/api`
+- Backend API: `http://localhost:8081/api`
 
 ---
 
