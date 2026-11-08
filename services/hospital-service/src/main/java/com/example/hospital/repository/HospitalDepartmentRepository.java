@@ -1,6 +1,6 @@
-package com.example.sentinelos.repository;
+package com.example.hospital.repository;
 
-import com.example.sentinelos.entity.HospitalDepartment;
+import com.example.hospital.entity.HospitalDepartment;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

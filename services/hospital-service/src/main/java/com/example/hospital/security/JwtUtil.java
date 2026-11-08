@@ -1,4 +1,4 @@
-package com.example.sentinelos.security;
+package com.example.hospital.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

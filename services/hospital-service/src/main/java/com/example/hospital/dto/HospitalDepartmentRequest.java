@@ -1,4 +1,4 @@
-package com.example.sentinelos.dto;
+package com.example.hospital.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

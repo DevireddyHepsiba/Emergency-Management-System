@@ -1,8 +1,8 @@
-# Sentinelos microservices migration
+# Sentinelos microservices migration status
 
 ## Current state
 
-The application currently runs as one Spring Boot API (`backend`, port 8081), one MongoDB connection, and a React frontend. The backend controllers and services share repositories and domain entities. This means the code is not independently deployable by domain yet.
+The repository now includes a Maven reactor for domain services and a Spring Cloud Gateway. The frontend uses the gateway on port 8080; the existing Spring Boot API stays on 8081 as a fallback for APIs not yet migrated. Domain services are independently packaged, but they still share MongoDB and retain copied user records/repositories for authorization and cross-domain reads. This is an incremental migration, not yet database-isolated microservices.
 
 The repository already has local uncommitted changes. This migration is designed to be additive and must not reset or overwrite those changes.
 
@@ -42,7 +42,7 @@ Each service owns its MongoDB database and its own Java request/response types. 
 ## Important implementation constraints
 
 - Do not point multiple services at the same MongoDB database and claim they own separate data. During a migration, legacy reads may remain temporarily, but writes should have one owner and a documented cutover.
-- Do not put a MongoDB URI or JWT signing secret in source-controlled configuration. Supply `MONGODB_URI` and `JWT_SECRET` through the environment or a secret manager. A database credential is currently present in the modified `backend/src/main/resources/application.properties`; rotate that credential before using the repository outside local development.
+- Do not put a MongoDB URI or JWT signing secret in source-controlled configuration. Supply `MONGODB_URI` and `JWT_SECRET` through the environment or a secret manager. Credentials previously committed or pasted into project files should be rotated, even after removing them from active configuration.
 - The current dashboard includes placeholder patient queue values. Moving those endpoints into a service does not make those figures live operational data.
 - This is a coordination prototype, not a validated emergency dispatch or patient-care system.
 
@@ -51,11 +51,13 @@ Each service owns its MongoDB database and its own Java request/response types. 
 | Component | Port |
 | --- | ---: |
 | API Gateway | 8080 |
-| Identity | 8081 |
-| Emergency | 8082 |
-| Hospital | 8083 |
-| Dispatch | 8084 |
-| Volunteer | 8085 |
+| Auth | 8082 |
+| Emergency | 8083 |
+| Hospital | 8084 |
+| Dispatch | 8085 |
+| Volunteer | 8086 |
+| AI scaffold | 8087 |
+| Legacy API | 8081 |
 
 The existing monolith currently uses port 8081, so it must be moved to a temporary legacy port when Identity takes 8081. Do this as part of the gateway/runtime change, not as an isolated port edit.
 

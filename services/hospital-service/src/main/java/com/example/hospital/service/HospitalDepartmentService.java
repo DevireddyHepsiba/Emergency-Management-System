@@ -1,10 +1,10 @@
-package com.example.sentinelos.service;
+package com.example.hospital.service;
 
-import com.example.sentinelos.dto.HospitalDepartmentRequest;
-import com.example.sentinelos.dto.HospitalDepartmentResponse;
-import com.example.sentinelos.entity.HospitalDepartment;
-import com.example.sentinelos.exception.UnauthorizedException;
-import com.example.sentinelos.repository.HospitalDepartmentRepository;
+import com.example.hospital.dto.HospitalDepartmentRequest;
+import com.example.hospital.dto.HospitalDepartmentResponse;
+import com.example.hospital.entity.HospitalDepartment;
+import com.example.hospital.exception.UnauthorizedException;
+import com.example.hospital.repository.HospitalDepartmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
