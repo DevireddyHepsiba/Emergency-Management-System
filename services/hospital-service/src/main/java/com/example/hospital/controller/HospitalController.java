@@ -1,12 +1,12 @@
-package com.example.sentinelos.controller;
+package com.example.hospital.controller;
 
-import com.example.sentinelos.dto.HospitalRequest;
-import com.example.sentinelos.dto.HospitalResponse;
-import com.example.sentinelos.entity.Role;
-import com.example.sentinelos.entity.User;
-import com.example.sentinelos.exception.UnauthorizedException;
-import com.example.sentinelos.repository.UserRepository;
-import com.example.sentinelos.service.HospitalService;
+import com.example.hospital.dto.HospitalRequest;
+import com.example.hospital.dto.HospitalResponse;
+import com.example.hospital.entity.Role;
+import com.example.hospital.entity.User;
+import com.example.hospital.exception.UnauthorizedException;
+import com.example.hospital.repository.UserRepository;
+import com.example.hospital.service.HospitalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

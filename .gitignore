@@ -9,6 +9,7 @@ frontend/.qodo/
 
 # Backend
 backend/target/
+**/target/
 backend/.mvn/
 backend/.idea/
 backend/node_modules/

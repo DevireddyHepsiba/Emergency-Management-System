@@ -40,10 +40,12 @@ This workflow is a coordination prototype. User role is not yet bound to a speci
 ## Repository layout
 
 ```text
-backend/   Spring Boot REST API and MongoDB persistence
-frontend/  React and TypeScript web application
-docs/      API, setup, and project notes
-README.md  Project overview and setup
+backend/       Legacy Spring Boot API retained as a migration fallback
+services/      Auth, emergency, hospital, dispatch, volunteer, and AI modules
+api-gateway/   Spring Cloud Gateway entry point for the frontend
+frontend/      React and TypeScript web application
+docs/          API, setup, and project notes
+pom.xml        Maven reactor for all service modules and the gateway
 ```
 
 ## Requirements
@@ -77,7 +79,7 @@ cd backend
 .\mvnw.cmd spring-boot:run
 ```
 
-The API listens on `http://localhost:8081`. The frontend calls that URL by default. To use another API address, create `frontend/.env.local` with:
+The legacy API listens on `http://localhost:8081`. The frontend now defaults to the gateway at `http://localhost:8080/api`. For the legacy-only setup above, create `frontend/.env.local` with:
 
 ```text
 VITE_API_URL=http://localhost:8081/api
@@ -126,3 +128,52 @@ For request and response details, see [Complete API Documentation](docs/COMPLETE
 ## License
 
 No license file is currently included. Add a `LICENSE` file before describing the repository as open source under a specific license.
+# Microservices development setup
+
+The repository now has a gradual microservices layout. The Vite app calls the API Gateway on port `8080`. Auth, emergency, hospital, dispatch, and volunteer routes are sent to their services. Routes that have not been migrated yet (including admin and AI features) continue to the existing backend on port `8081`.
+
+The current domain services share one MongoDB database as a migration step. Some existing workflows still read records owned by another domain, so moving to separate databases needs API/event-based coordination and data migration before it is safe. Do not use this prototype as a production emergency response system.
+
+## Run the backend stack with Docker Desktop
+
+From the project root in PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+# Edit .env and replace JWT_SECRET with a unique random value of at least 32 characters.
+docker compose up --build
+```
+
+After the containers start, run the frontend in another terminal:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Open the Vite URL printed in the terminal. API requests go through `http://localhost:8080/api`. To stop the stack, press `Ctrl+C`, then run `docker compose down`. Mongo data is stored in the named `mongo-data` volume and remains across restarts; `docker compose down -v` deletes that local data.
+
+## Run a single Java service outside Docker
+
+Install Java 17 and Maven, start MongoDB, then set the same JWT key and Mongo URI in the PowerShell session before starting a module. For example:
+
+```powershell
+$env:JWT_SECRET = "replace-this-with-a-unique-random-secret-at-least-32-characters"
+$env:MONGODB_URI = "mongodb://localhost:27017/sentinelos"
+mvn -pl services/auth-service -am spring-boot:run
+```
+
+Service ports are auth `8082`, emergency `8083`, hospital `8084`, dispatch `8085`, volunteer `8086`, AI scaffold `8087`, and gateway `8080`. The legacy backend stays on `8081`. For a direct frontend-to-legacy run, set `VITE_API_URL=http://localhost:8081/api` in `frontend/.env.local`.
+
+## Service boundaries and current status
+
+- `auth-service` owns login and registration.
+- `emergency-service` owns emergency reports and triage.
+- `hospital-service` owns hospital and capacity endpoints.
+- `dispatch-service` owns rescue missions, ambulances, and resource recommendations.
+- `volunteer-service` owns volunteer task endpoints.
+- `ai-service` is a runnable scaffold only; AI endpoints remain on the legacy backend until their contracts and implementation are migrated.
+- `api-gateway` is the frontend entry point and sends unported `/api/**` paths to the legacy backend.
+
+Use the shared root Maven build when packaging service containers. Do not add real credentials to `application.properties`; use `.env` locally and keep it out of version control.

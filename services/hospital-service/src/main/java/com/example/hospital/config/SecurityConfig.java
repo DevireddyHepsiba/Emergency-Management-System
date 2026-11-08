@@ -1,6 +1,6 @@
-package com.example.sentinelos.config;
+package com.example.hospital.config;
 
-import com.example.sentinelos.security.JwtAuthenticationFilter;
+import com.example.hospital.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

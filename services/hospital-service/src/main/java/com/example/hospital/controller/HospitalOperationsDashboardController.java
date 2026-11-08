@@ -1,8 +1,8 @@
-package com.example.sentinelos.controller;
+package com.example.hospital.controller;
 
-import com.example.sentinelos.repository.HospitalDepartmentRepository;
-import com.example.sentinelos.repository.HospitalRepository;
-import com.example.sentinelos.service.HospitalDepartmentService;
+import com.example.hospital.repository.HospitalDepartmentRepository;
+import com.example.hospital.repository.HospitalRepository;
+import com.example.hospital.service.HospitalDepartmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

@@ -1,6 +1,6 @@
-package com.example.sentinelos.security;
+package com.example.hospital.security;
 
-import com.example.sentinelos.repository.UserRepository;
+import com.example.hospital.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
